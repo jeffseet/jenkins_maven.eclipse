@@ -6,10 +6,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.json.JSONObject;
 
 public class SongCollection {
+
+	private static final Logger logger = Logger.getLogger(SongCollection.class.getName());
 
 	private static final int DEFAULT_CAPACITY = 20;
 	private final List<Song> songs;
@@ -71,7 +74,7 @@ public class SongCollection {
 				}
 			}
 		} catch (Exception e) {
-			System.err.println("Failed to fetch song JSON: " + e.getMessage());
+			logger.severe("Failed to fetch song JSON: " + e.getMessage());
 		}
 		return null;
 	}
@@ -104,7 +107,7 @@ public class SongCollection {
 			return song;
 
 		} catch (Exception e) {
-			System.err.println("Error parsing song of the day: " + e.getMessage());
+			logger.severe("Error parsing song of the day: " + e.getMessage());
 			return null;
 		}
 	}
