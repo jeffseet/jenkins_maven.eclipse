@@ -6,6 +6,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 import org.json.JSONObject;
@@ -17,8 +18,23 @@ public class SongCollection {
 	private final List<Song> songs;
 	private String jsonApiUrl = "https://mocki.io/v1/36c94419-b141-4cfd-96fa-327f4872aca6";
 
+	/**
+	 * Factory to provide HttpURLConnection instances for testing/mocking. Defaults
+	 * to a supplier that creates a new HttpURLConnection for the jsonApiUrl.
+	 */
+	private Supplier<HttpURLConnection> connectionFactory;
+
 	public SongCollection() {
 		this.songs = new ArrayList<>(DEFAULT_CAPACITY);
+		this.connectionFactory = this::defaultConnectionFactory;
+	}
+
+	/**
+	 * Constructor for injecting custom connection factory (used in tests).
+	 */
+	public SongCollection(Supplier<HttpURLConnection> connectionFactory) {
+		this.songs = new ArrayList<>(DEFAULT_CAPACITY);
+		this.connectionFactory = connectionFactory;
 	}
 
 	public List<Song> getSongs() {
@@ -63,8 +79,7 @@ public class SongCollection {
 	 */
 	protected String fetchSongJson() {
 		try {
-			URL url = new URL(jsonApiUrl);
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			HttpURLConnection conn = connectionFactory.get();
 			conn.setRequestMethod("GET");
 
 			if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -86,10 +101,30 @@ public class SongCollection {
 	}
 
 	/**
+	 * Default connection factory that creates HttpURLConnection for jsonApiUrl.
+	 */
+	private HttpURLConnection defaultConnectionFactory() {
+		try {
+			URL url = new URL(jsonApiUrl);
+			return (HttpURLConnection) url.openConnection();
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to create HttpURLConnection", e);
+		}
+	}
+
+	/**
 	 * Allows setting a custom URL for the song JSON API. Useful for mocking or
 	 * testing against test endpoints.
 	 */
 	public void setJsonApiUrl(String jsonApiUrl) {
 		this.jsonApiUrl = jsonApiUrl;
+	}
+
+	/**
+	 * Allows injecting a custom connection factory. Useful for unit testing with
+	 * mocks.
+	 */
+	public void setConnectionFactory(Supplier<HttpURLConnection> connectionFactory) {
+		this.connectionFactory = connectionFactory;
 	}
 }
