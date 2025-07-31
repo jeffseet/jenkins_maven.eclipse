@@ -101,7 +101,16 @@ public class Song {
 	public static Comparator<Song> songLengthComparator = new Comparator<Song>() {
 		@Override
 		public int compare(Song s1, Song s2) {
-			return (s2.getSongLength() < s1.getSongLength() ? -1 : (s2.getSongLength() == s1.getSongLength() ? 0 : 1));
+			double length1 = s1.getSongLength();
+			double length2 = s2.getSongLength();
+
+			if (length2 < length1) {
+				return -1;
+			} else if (length2 == length1) {
+				return 0;
+			} else {
+				return 1;
+			}
 		}
 	};
 
