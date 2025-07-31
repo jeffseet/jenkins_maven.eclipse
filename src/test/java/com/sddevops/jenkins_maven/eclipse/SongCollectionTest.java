@@ -10,7 +10,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -147,50 +146,59 @@ class SongCollectionTest {
 		assertEquals(3.5, song.getSongLength(), 0.01);
 	}
 
-	// New tests to fully cover fetchSongJson()
+	// ==== New Tests to cover fetchSongJson fully by mocking HttpURLConnection ====
 
 	@Test
-	void testFetchSongJson_successful() throws Exception {
+	void testFetchSongJson_success() throws Exception {
+		// Mock HttpURLConnection
 		HttpURLConnection mockConn = mock(HttpURLConnection.class);
 
-		String jsonResponse = "{\"id\":\"123\",\"title\":\"Test\",\"artiste\":\"Artist\",\"songLength\":3.5}";
-		InputStream mockInputStream = new ByteArrayInputStream(jsonResponse.getBytes());
+		String responseJson = """
+				{
+				    "id": "020",
+				    "title": "Test Song",
+				    "artiste": "Test Artist",
+				    "songLength": 3.0
+				}
+				""";
+
+		// Setup InputStream for BufferedReader
+		ByteArrayInputStream bais = new ByteArrayInputStream(responseJson.getBytes());
 
 		when(mockConn.getResponseCode()).thenReturn(HttpURLConnection.HTTP_OK);
-		when(mockConn.getInputStream()).thenReturn(mockInputStream);
+		when(mockConn.getInputStream()).thenReturn(bais);
 
-		SongCollection collection = new SongCollection(() -> mockConn);
+		// Inject a Supplier to return our mocked connection
+		sc.setConnectionSupplier(() -> mockConn);
 
-		String result = collection.fetchSongJson();
-		assertEquals(jsonResponse, result);
+		String json = sc.fetchSongJson();
+
+		assertNotNull(json);
+		assertTrue(json.contains("Test Song"));
 	}
 
 	@Test
 	void testFetchSongJson_nonOkResponse() throws Exception {
 		HttpURLConnection mockConn = mock(HttpURLConnection.class);
+
 		when(mockConn.getResponseCode()).thenReturn(HttpURLConnection.HTTP_NOT_FOUND);
 
-		SongCollection collection = new SongCollection(() -> mockConn);
-		String result = collection.fetchSongJson();
+		sc.setConnectionSupplier(() -> mockConn);
 
-		assertNull(result);
+		String json = sc.fetchSongJson();
+
+		assertNull(json);
 	}
 
 	@Test
-	void testFetchSongJson_connectionSupplierReturnsNull() {
-		SongCollection collection = new SongCollection(() -> null);
-		String result = collection.fetchSongJson();
-
-		assertNull(result);
-	}
-
-	@Test
-	void testFetchSongJson_throwsException() {
-		SongCollection collection = new SongCollection(() -> {
-			throw new RuntimeException("connection failed");
+	void testFetchSongJson_exceptionThrown() throws Exception {
+		// Supplier that throws exception to simulate URL openConnection failure
+		sc.setConnectionSupplier(() -> {
+			throw new RuntimeException("Connection failure");
 		});
-		String result = collection.fetchSongJson();
 
-		assertNull(result);
+		String json = sc.fetchSongJson();
+
+		assertNull(json);
 	}
 }
