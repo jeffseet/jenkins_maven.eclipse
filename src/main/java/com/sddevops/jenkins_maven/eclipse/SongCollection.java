@@ -95,7 +95,12 @@ public class SongCollection {
 			}
 
 			Song song = new Song(id, title, artiste, length);
-			addSong(song);
+
+			// Add only if artiste is Taylor Swift or Bruno Mars
+			if ("TS".equals(artiste) || "BM".equals(artiste)) {
+				addSong(song);
+			}
+
 			return song;
 
 		} catch (Exception e) {
