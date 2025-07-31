@@ -15,31 +15,34 @@
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-		<!-- jacoco properties -->
-		<jacoco.groupId>org.jacoco</jacoco.groupId>
-		<jacoco.artifactId>jacoco-maven-plugin</jacoco.artifactId>
-		<jacoco.version>0.8.12</jacoco.version>
 
-		<!-- SonarQube properties -->
-		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
-		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
-		<sonar.language>java</sonar.language>
-		
-		<!-- JUnit properties -->
-		<junit-jupiter.groupId>org.junit.jupiter</junit-jupiter.groupId>
-		<junit-jupiter.artifactId>junit-jupiter</junit-jupiter.artifactId>
-		<junit-jupiter.version>5.11.4</junit-jupiter.version>
+        <!-- jacoco properties -->
+        <jacoco.groupId>org.jacoco</jacoco.groupId>
+        <jacoco.artifactId>jacoco-maven-plugin</jacoco.artifactId>
+        <jacoco.version>0.8.12</jacoco.version>
 
+        <!-- SonarQube properties -->
+        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+        <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+        <sonar.language>java</sonar.language>
+
+        <!-- JUnit properties -->
+        <junit-jupiter.groupId>org.junit.jupiter</junit-jupiter.groupId>
+        <junit-jupiter.artifactId>junit-jupiter</junit-jupiter.artifactId>
+        <junit-jupiter.version>5.11.4</junit-jupiter.version>
+
+        <!-- Mockito property (✅ added fix) -->
+        <mockito.version>5.11.0</mockito.version>
     </properties>
 
     <dependencies>
         <!-- JUnit 5 -->
-		<dependency>
-			<groupId>${junit-jupiter.groupId}</groupId>
-			<artifactId>${junit-jupiter.artifactId}</artifactId>
-			<version>${junit-jupiter.version}</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>${junit-jupiter.groupId}</groupId>
+            <artifactId>${junit-jupiter.artifactId}</artifactId>
+            <version>${junit-jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Mockito Core -->
         <dependency>
@@ -56,11 +59,13 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- JSON dependency -->
         <dependency>
-    		<groupId>org.json</groupId>
-    		<artifactId>json</artifactId>
-    		<version>20230227</version>
-		</dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20230227</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -85,29 +90,31 @@
                     <useModulePath>false</useModulePath>
                 </configuration>
             </plugin>
-			<plugin>
-				<groupId>${jacoco.groupId}</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>${jacoco.version}</version>
-				<configuration>
-					<formats>XML</formats>
-				</configuration>
-				<executions>
-					<execution>
-						<id>prepare-agent</id>
-						<goals>
-							<goal>prepare-agent</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>report</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>report</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>            
+
+            <!-- Jacoco Plugin -->
+            <plugin>
+                <groupId>${jacoco.groupId}</groupId>
+                <artifactId>${jacoco.artifactId}</artifactId>
+                <version>${jacoco.version}</version>
+                <configuration>
+                    <formats>XML</formats>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
