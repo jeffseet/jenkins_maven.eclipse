@@ -13,47 +13,48 @@ import org.json.JSONObject;
 public class SongCollection {
 
 	private static final Logger logger = Logger.getLogger(SongCollection.class.getName());
-
 	private static final int DEFAULT_CAPACITY = 20;
+
 	private final List<Song> songs;
-	private final int capacity;
 
 	public SongCollection() {
-		this(DEFAULT_CAPACITY);
-	}
-
-	public SongCollection(int capacity) {
-		this.capacity = capacity;
-		this.songs = new ArrayList<>();
+		this.songs = new ArrayList<>(DEFAULT_CAPACITY);
 	}
 
 	public List<Song> getSongs() {
-		return new ArrayList<>(songs); // Defensive copy
+		return songs;
 	}
 
-	public boolean addSong(Song song) {
-		if (songs.size() < capacity) {
-			return songs.add(song);
+	public void addSong(Song song) {
+		if (song != null) {
+			songs.add(song);
 		}
-		return false;
 	}
 
-	public List<Song> sortSongsByTitle() {
-		songs.sort(Song.titleComparator);
-		return songs;
+	public Song getSongById(String id) {
+		for (Song song : songs) {
+			if (song.getId().equals(id)) {
+				return song;
+			}
+		}
+		return null;
 	}
 
-	public List<Song> sortSongsBySongLength() {
-		songs.sort(Song.songLengthComparator);
-		return songs;
-	}
-
-	public Song findSongById(String id) {
-		return songs.stream().filter(s -> s.getId().equals(id)).findFirst().orElse(null);
-	}
-
-	public Song findSongByTitle(String title) {
-		return songs.stream().filter(s -> s.getTitle().equalsIgnoreCase(title)).findFirst().orElse(null);
+	public Song getSongOfTheDay() {
+		String json = fetchSongJson();
+		if (json != null) {
+			try {
+				JSONObject obj = new JSONObject(json);
+				String id = obj.getString("id");
+				String title = obj.getString("title");
+				String artiste = obj.getString("artiste");
+				double length = obj.getDouble("songLength");
+				return new Song(id, title, artiste, length);
+			} catch (Exception e) {
+				logger.severe("Error parsing JSON: " + e.getMessage());
+			}
+		}
+		return null;
 	}
 
 	protected String fetchSongJson() {
@@ -72,43 +73,12 @@ public class SongCollection {
 					}
 					return response.toString();
 				}
+			} else {
+				logger.warning("Non-OK response from API: " + conn.getResponseCode());
 			}
 		} catch (Exception e) {
 			logger.severe("Failed to fetch song JSON: " + e.getMessage());
 		}
 		return null;
-	}
-
-	public Song fetchSongOfTheDay() {
-		try {
-			String jsonStr = fetchSongJson();
-			if (jsonStr == null)
-				return null;
-
-			JSONObject json = new JSONObject(jsonStr);
-			String id = json.getString("id");
-			String title = json.getString("title");
-			String artiste = json.getString("artiste");
-			double length = json.getDouble("songLength");
-
-			if ("Taylor Swift".equals(artiste)) {
-				artiste = "TS";
-			} else if ("Bruno Mars".equals(artiste)) {
-				artiste = "BM";
-			}
-
-			Song song = new Song(id, title, artiste, length);
-
-			// Add only if artiste is Taylor Swift or Bruno Mars
-			if ("TS".equals(artiste) || "BM".equals(artiste)) {
-				addSong(song);
-			}
-
-			return song;
-
-		} catch (Exception e) {
-			logger.severe("Error parsing song of the day: " + e.getMessage());
-			return null;
-		}
 	}
 }
