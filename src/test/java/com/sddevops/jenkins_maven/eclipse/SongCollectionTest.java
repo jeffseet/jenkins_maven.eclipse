@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -17,7 +18,6 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 class SongCollectionTest {
 
@@ -147,36 +147,27 @@ class SongCollectionTest {
 		assertEquals(3.5, song.getSongLength(), 0.01);
 	}
 
-	// --- New Mockito test for fetchSongJson() coverage ---
+	// New tests to fully cover fetchSongJson()
 
 	@Test
-	void testFetchSongJson_withMockedHttpURLConnection() throws Exception {
-		// Prepare mock HttpURLConnection
-		HttpURLConnection mockConn = Mockito.mock(HttpURLConnection.class);
+	void testFetchSongJson_successful() throws Exception {
+		HttpURLConnection mockConn = mock(HttpURLConnection.class);
 
-		// Mock the InputStream with JSON data
-		String expectedJson = "{\"id\":\"999\",\"title\":\"Test Song\",\"artiste\":\"Test Artist\",\"songLength\":3.3}";
-		InputStream mockInputStream = new ByteArrayInputStream(expectedJson.getBytes());
+		String jsonResponse = "{\"id\":\"123\",\"title\":\"Test\",\"artiste\":\"Artist\",\"songLength\":3.5}";
+		InputStream mockInputStream = new ByteArrayInputStream(jsonResponse.getBytes());
 
-		// Configure mock behavior
 		when(mockConn.getResponseCode()).thenReturn(HttpURLConnection.HTTP_OK);
 		when(mockConn.getInputStream()).thenReturn(mockInputStream);
 
-		// Inject the connection supplier into SongCollection
 		SongCollection collection = new SongCollection(() -> mockConn);
 
-		// Call the protected method via subclass to expose it or reflection,
-		// but since fetchSongJson is protected, can call directly here because same
-		// package
-		String jsonResult = collection.fetchSongJson();
-
-		// Assert the JSON string returned matches expected
-		assertEquals(expectedJson, jsonResult);
+		String result = collection.fetchSongJson();
+		assertEquals(jsonResponse, result);
 	}
 
 	@Test
-	void testFetchSongJson_nonOkResponseLogsWarning() throws Exception {
-		HttpURLConnection mockConn = Mockito.mock(HttpURLConnection.class);
+	void testFetchSongJson_nonOkResponse() throws Exception {
+		HttpURLConnection mockConn = mock(HttpURLConnection.class);
 		when(mockConn.getResponseCode()).thenReturn(HttpURLConnection.HTTP_NOT_FOUND);
 
 		SongCollection collection = new SongCollection(() -> mockConn);
@@ -186,12 +177,18 @@ class SongCollectionTest {
 	}
 
 	@Test
-	void testFetchSongJson_throwsExceptionLogsSevere() {
-		// Create SongCollection with connection factory that throws an exception
-		SongCollection collection = new SongCollection(() -> {
-			throw new RuntimeException("Connection error");
-		});
+	void testFetchSongJson_connectionSupplierReturnsNull() {
+		SongCollection collection = new SongCollection(() -> null);
+		String result = collection.fetchSongJson();
 
+		assertNull(result);
+	}
+
+	@Test
+	void testFetchSongJson_throwsException() {
+		SongCollection collection = new SongCollection(() -> {
+			throw new RuntimeException("connection failed");
+		});
 		String result = collection.fetchSongJson();
 
 		assertNull(result);

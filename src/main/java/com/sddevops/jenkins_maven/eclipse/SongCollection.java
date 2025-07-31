@@ -18,23 +18,30 @@ public class SongCollection {
 	private final List<Song> songs;
 	private String jsonApiUrl = "https://mocki.io/v1/36c94419-b141-4cfd-96fa-327f4872aca6";
 
-	/**
-	 * Factory to provide HttpURLConnection instances for testing/mocking. Defaults
-	 * to a supplier that creates a new HttpURLConnection for the jsonApiUrl.
-	 */
-	private Supplier<HttpURLConnection> connectionFactory;
+	// Supplier to provide HttpURLConnection - can be mocked for tests
+	private Supplier<HttpURLConnection> connectionSupplier;
 
+	// Default constructor uses real URL connection
 	public SongCollection() {
 		this.songs = new ArrayList<>(DEFAULT_CAPACITY);
-		this.connectionFactory = this::defaultConnectionFactory;
+		this.connectionSupplier = this::createHttpURLConnection;
 	}
 
-	/**
-	 * Constructor for injecting custom connection factory (used in tests).
-	 */
-	public SongCollection(Supplier<HttpURLConnection> connectionFactory) {
+	// Constructor with custom connection supplier for testing
+	public SongCollection(Supplier<HttpURLConnection> connectionSupplier) {
 		this.songs = new ArrayList<>(DEFAULT_CAPACITY);
-		this.connectionFactory = connectionFactory;
+		this.connectionSupplier = connectionSupplier;
+	}
+
+	// Creates the real HttpURLConnection from jsonApiUrl
+	private HttpURLConnection createHttpURLConnection() {
+		try {
+			URL url = new URL(jsonApiUrl);
+			return (HttpURLConnection) url.openConnection();
+		} catch (Exception e) {
+			logger.severe("Failed to create HttpURLConnection: " + e.getMessage());
+			return null;
+		}
 	}
 
 	public List<Song> getSongs() {
@@ -74,12 +81,16 @@ public class SongCollection {
 	}
 
 	/**
-	 * Fetch JSON from the remote API. Protected for testing purposes (can be
-	 * overridden or mocked).
+	 * Fetch JSON from remote API. Protected so can be overridden or mocked for
+	 * testing.
 	 */
 	protected String fetchSongJson() {
 		try {
-			HttpURLConnection conn = connectionFactory.get();
+			HttpURLConnection conn = connectionSupplier.get();
+			if (conn == null) {
+				logger.severe("HttpURLConnection is null");
+				return null;
+			}
 			conn.setRequestMethod("GET");
 
 			if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -101,30 +112,9 @@ public class SongCollection {
 	}
 
 	/**
-	 * Default connection factory that creates HttpURLConnection for jsonApiUrl.
-	 */
-	private HttpURLConnection defaultConnectionFactory() {
-		try {
-			URL url = new URL(jsonApiUrl);
-			return (HttpURLConnection) url.openConnection();
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to create HttpURLConnection", e);
-		}
-	}
-
-	/**
-	 * Allows setting a custom URL for the song JSON API. Useful for mocking or
-	 * testing against test endpoints.
+	 * Allows setting a custom URL for the song JSON API.
 	 */
 	public void setJsonApiUrl(String jsonApiUrl) {
 		this.jsonApiUrl = jsonApiUrl;
-	}
-
-	/**
-	 * Allows injecting a custom connection factory. Useful for unit testing with
-	 * mocks.
-	 */
-	public void setConnectionFactory(Supplier<HttpURLConnection> connectionFactory) {
-		this.connectionFactory = connectionFactory;
 	}
 }
