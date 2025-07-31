@@ -14,8 +14,8 @@ public class SongCollection {
 
 	private static final Logger logger = Logger.getLogger(SongCollection.class.getName());
 	private static final int DEFAULT_CAPACITY = 20;
-
 	private final List<Song> songs;
+	private String jsonApiUrl = "https://mocki.io/v1/36c94419-b141-4cfd-96fa-327f4872aca6";
 
 	public SongCollection() {
 		this.songs = new ArrayList<>(DEFAULT_CAPACITY);
@@ -57,10 +57,13 @@ public class SongCollection {
 		return null;
 	}
 
+	/**
+	 * Fetch JSON from the remote API. Protected for testing purposes (can be
+	 * overridden or mocked).
+	 */
 	protected String fetchSongJson() {
-		String urlString = "https://mocki.io/v1/36c94419-b141-4cfd-96fa-327f4872aca6";
 		try {
-			URL url = new URL(urlString);
+			URL url = new URL(jsonApiUrl);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 
@@ -80,5 +83,13 @@ public class SongCollection {
 			logger.severe("Failed to fetch song JSON: " + e.getMessage());
 		}
 		return null;
+	}
+
+	/**
+	 * Allows setting a custom URL for the song JSON API. Useful for mocking or
+	 * testing against test endpoints.
+	 */
+	public void setJsonApiUrl(String jsonApiUrl) {
+		this.jsonApiUrl = jsonApiUrl;
 	}
 }

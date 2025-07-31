@@ -83,10 +83,10 @@ class SongCollectionTest {
 	void testGetSongOfTheDay_validJson() {
 		String mockJson = """
 				{
-					"id": "010",
-					"title": "Mock Song",
-					"artiste": "Mock Artist",
-					"songLength": 4.25
+				    "id": "010",
+				    "title": "Mock Song",
+				    "artiste": "Mock Artist",
+				    "songLength": 4.25
 				}
 				""";
 
@@ -125,10 +125,10 @@ class SongCollectionTest {
 	void testGetSongOfTheDay_artistInitialHandling() {
 		String taylorJson = """
 				{
-					"id": "TS1",
-					"title": "Love Story",
-					"artiste": "Taylor Swift",
-					"songLength": 3.5
+				    "id": "TS1",
+				    "title": "Love Story",
+				    "artiste": "Taylor Swift",
+				    "songLength": 3.5
 				}
 				""";
 
