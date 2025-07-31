@@ -5,60 +5,52 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.json.JSONObject;
 
 public class SongCollection {
 
-	private ArrayList<Song> songs = new ArrayList<>();
-	private int capacity;
+	private static final int DEFAULT_CAPACITY = 20;
+	private final List<Song> songs;
+	private final int capacity;
 
 	public SongCollection() {
-		// Constructor code here (if any)
-
-		this.capacity = 20;
+		this(DEFAULT_CAPACITY);
 	}
 
 	public SongCollection(int capacity) {
 		this.capacity = capacity;
+		this.songs = new ArrayList<>();
 	}
 
 	public List<Song> getSongs() {
-		return songs;
+		return new ArrayList<>(songs); // Defensive copy
 	}
 
-	public void addSong(Song song) {
-		if (songs.size() != capacity) {
-			songs.add(song);
+	public boolean addSong(Song song) {
+		if (songs.size() < capacity) {
+			return songs.add(song);
 		}
+		return false;
 	}
 
 	public List<Song> sortSongsByTitle() {
-		Collections.sort(songs, Song.titleComparator);
+		songs.sort(Song.titleComparator);
 		return songs;
 	}
 
 	public List<Song> sortSongsBySongLength() {
-		Collections.sort(songs, Song.songLengthComparator);
+		songs.sort(Song.songLengthComparator);
 		return songs;
 	}
 
-	public Song findSongsById(String id) {
-		for (Song s : songs) {
-			if (s.getId().equals(id))
-				return s;
-		}
-		return null;
+	public Song findSongById(String id) {
+		return songs.stream().filter(s -> s.getId().equals(id)).findFirst().orElse(null);
 	}
 
 	public Song findSongByTitle(String title) {
-		for (Song s : songs) {
-			if (s.getTitle().equals(title))
-				return s;
-		}
-		return null;
+		return songs.stream().filter(s -> s.getTitle().equalsIgnoreCase(title)).findFirst().orElse(null);
 	}
 
 	protected String fetchSongJson() {
@@ -69,17 +61,17 @@ public class SongCollection {
 			conn.setRequestMethod("GET");
 
 			if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
-				BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-				StringBuilder response = new StringBuilder();
-				String inputLine;
-				while ((inputLine = in.readLine()) != null) {
-					response.append(inputLine);
+				try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+					StringBuilder response = new StringBuilder();
+					String inputLine;
+					while ((inputLine = in.readLine()) != null) {
+						response.append(inputLine);
+					}
+					return response.toString();
 				}
-				in.close();
-				return response.toString();
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.err.println("Failed to fetch song JSON: " + e.getMessage());
 		}
 		return null;
 	}
@@ -89,21 +81,25 @@ public class SongCollection {
 			String jsonStr = fetchSongJson();
 			if (jsonStr == null)
 				return null;
-			JSONObject json = new JSONObject(jsonStr);
-			Song song = new Song(json.getString("id"), json.getString("title"), json.getString("artiste"),
-					json.getDouble("songLength"));
 
-			if (song.getArtiste().equals("Taylor Swift")) {
-				song.setArtiste("TS");
-				this.addSong(song);
-			} else if (song.getArtiste().equals("Bruno Mars")) {
-				song.setArtiste("BM");
-				this.addSong(song);
+			JSONObject json = new JSONObject(jsonStr);
+			String id = json.getString("id");
+			String title = json.getString("title");
+			String artiste = json.getString("artiste");
+			double length = json.getDouble("songLength");
+
+			if ("Taylor Swift".equals(artiste)) {
+				artiste = "TS";
+			} else if ("Bruno Mars".equals(artiste)) {
+				artiste = "BM";
 			}
 
+			Song song = new Song(id, title, artiste, length);
+			addSong(song);
 			return song;
+
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.err.println("Error parsing song of the day: " + e.getMessage());
 			return null;
 		}
 	}
