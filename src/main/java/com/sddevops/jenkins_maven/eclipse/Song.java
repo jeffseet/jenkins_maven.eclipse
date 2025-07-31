@@ -96,12 +96,7 @@ public class Song {
 				&& Objects.equals(title, other.title);
 	}
 
-	public static Comparator<Song> titleComparator = new Comparator<Song>() {
-		@Override
-		public int compare(Song s1, Song s2) {
-			return (int) (s1.getTitle().compareTo(s2.getTitle()));
-		}
-	};
+	public static final Comparator<Song> titleComparator = Comparator.comparing(Song::getTitle);
 
 	public static Comparator<Song> songLengthComparator = new Comparator<Song>() {
 		@Override
