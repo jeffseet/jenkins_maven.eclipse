@@ -26,7 +26,7 @@ pipeline {
         stage("scan") {
             steps {
                 echo "Start SonarQube Scan"
-                withSonarQubeEnv('Local SonarQube') {
+                withSonarQubeEnv('SonarQube') {
                     bat "sonar-scanner"
                 }
             }
