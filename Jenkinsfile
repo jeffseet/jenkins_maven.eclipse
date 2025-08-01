@@ -1,35 +1,47 @@
 pipeline {
     agent any
+
     tools {
-        maven 'maven'
-        jdk 'Java JDK 17'
+        maven 'maven'         // Must match Maven name in Jenkins tools config
+        jdk 'Java JDK 17'     // Must match JDK name in Jenkins tools config
     }
+
     stages {
-        stage("clean") {
+        stage('Clean') {
             steps {
-                echo "Start Clean"
-                bat "mvn clean"
+                echo 'Starting Clean Phase...'
+                bat 'mvn clean'
             }
         }
-        stage("test") {
+
+        stage('Test') {
             steps {
-                echo "Start Test"
-                bat "mvn test"
+                echo 'Starting Test Phase...'
+                bat 'mvn test'
             }
         }
-        stage("build") {
+
+        stage('Build') {
             steps {
-                echo "Start Build"
-                bat "mvn install -DskipTests"
+                echo 'Starting Build Phase...'
+                bat 'mvn install -DskipTests'
             }
         }
-        stage("scan") {
+
+        stage('Scan') {
             steps {
-                echo "Start SonarQube Scan"
-                withSonarQubeEnv('SonarQube') {
-                    bat "sonar-scanner"
-                }
+                echo 'Start scan'
+                bat 'mvn sonar:sonar'
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed.'
         }
     }
 }
